@@ -4,126 +4,218 @@
 
 Chromatic Echo began with a question: *What if we could listen to an image instead of only looking at it?*
 
-As someone with a background in animation and visual arts, I am interested in how different media can communicate atmosphere and emotion. I wanted to explore whether the visual qualities of an image could be translated into a musical experience.
+As someone with a background in animation and visual arts, I am interested in how different media communicate atmosphere and emotion. I wanted to explore whether the visual characteristics of an image could be translated into a musical and experimental sound experience.
 
-The intended users are people interested in photography, visual art, and experimental sound. They can upload an image, listen to a sound generated from its visual characteristics, and explore the relationship between what they see and what they hear.
+The intended users are people interested in photography, visual art, and experimental sound. They can upload an image, listen to a soundscape generated from its visual characteristics, and explore how different ways of reading an image affect what they hear.
 
-Rather than relying on a paid AI music-generation service, I chose to experiment with image analysis and procedural sound synthesis. This approach allows the relationship between visual input and audio output to be more transparent and reproducible.
+Rather than relying on an external AI music-generation service, I chose image analysis and procedural sound synthesis. This allows the relationship between visual input and audio output to remain transparent, reproducible, and open to experimentation.
 
 ## 2. Iteration 1 — Image Upload and Visual Analysis
 
-My first prototype focused on creating a working interaction using Python and Streamlit.
+The first prototype focused on establishing a working interaction using Python and Streamlit.
 
-I implemented an image uploader and used Pillow and NumPy to analyse the uploaded image. The program calculates brightness, saturation, hue, average colour, and the average colours of eight vertical image regions.
+I implemented an image uploader and used Pillow and NumPy to analyse brightness, saturation, hue, average colour, and the average colours of eight vertical image regions.
 
-I divided the image into eight regions because I wanted the spatial arrangement of colours to influence the eventual musical sequence, rather than relying only on the overall average colour.
+I divided the image into eight regions because I wanted its spatial composition to influence the eventual sound, rather than using only one overall average colour.
 
 ### Problem Encountered
 
-During initial testing, I attempted to upload a high-resolution photograph, but the application rejected it because the file exceeded the original 10 MB limit.
+During testing, I uploaded a high-resolution photograph, but the application rejected it because the file exceeded the original 10 MB limit.
 
-The program displayed an error message instead of crashing, which showed that the error handling was working. However, the limit was too restrictive for some photographs taken with digital cameras.
+The program displayed an error message instead of crashing, demonstrating that basic error handling worked. However, the restriction was too limiting for some digital photographs.
 
-### Design Decision
+### Design Decision and Result
 
-I increased the file-size limit from 10 MB to 25 MB and retained image resizing during analysis to reduce processing costs.
+I increased the maximum file size to 25 MB while retaining image resizing during analysis to control processing costs.
 
-After restarting the application, I successfully uploaded the photograph and confirmed that the visual analysis worked.
+After restarting the application, I successfully uploaded the photograph and confirmed that the analysis worked.
 
-This experience reminded me that technical constraints should be considered in relation to the materials users are likely to provide.
+This demonstrated the importance of designing technical constraints around the materials users are likely to provide.
 
 ## 3. Iteration 2 — Translating Images into Sound
 
-The second iteration focused on creating the main interactive response.
+The second iteration established the central interaction.
 
-I developed a sound-generation module using NumPy and Python's wave library. The application maps the colours of eight image regions to a sequence of eight musical notes.
+I developed a sound-generation module using NumPy and Python's wave library. The initial system translated eight image regions into eight musical notes, using image characteristics to influence pitch and sound.
 
-The overall hue influences the tonal centre, brightness influences the pitch register, and saturation affects the harmonic content of the synthesized sound.
+I also implemented a Generate Sound button, an audio player, a WAV download option, and information about the generated notes.
 
-I also added a Generate Sound button, an audio player, a WAV download option, and information about the generated notes.
+The main interaction became:
 
-This established the main interaction loop:
-
-**Image Upload → Visual Analysis → Sound Generation → Listening and Feedback**
+**Image Upload → Visual Analysis → Sound Generation → Listening**
 
 ### Initial Sound Evaluation
 
-I tested the program with a relatively dark photograph containing warm brown tones.
+I tested the prototype with a relatively dark photograph containing warm brown tones.
 
-The resulting sound was low-pitched and subdued. I felt that this atmosphere suited the image, suggesting that the initial mapping produced a meaningful relationship between the visual input and the audio output.
+The resulting sound was low-pitched and subdued. I felt that its atmosphere suited the image, suggesting that the initial mapping had expressive potential.
 
-However, I also noticed that several generated notes had the same frequency, resulting in limited melodic variation.
+However, several notes had the same frequency, creating a repetitive musical sequence.
 
 ### Design Decision
 
-Rather than immediately increasing the pitch range, I decided to preserve the relationship between the image's visual atmosphere and the generated sound.
+Instead of simply increasing the pitch range, I wanted to preserve the relationship between the image's atmosphere and the generated sound.
 
-For the next iteration, I plan to explore richer sound textures and more subtle musical variation while maintaining the influence of the original image.
+I decided to move towards layered ambient textures and experimental sound materials rather than conventional melody generation.
 
-## 4. AI Assistance
+## 4. Iteration 3 — Improving Colour Recognition and Sound Diversity
 
-I used ChatGPT during the development process to help structure the project, understand technical concepts, draft Python code, and troubleshoot implementation problems.
+During further testing, I noticed that different images often produced similar sounds.
 
-AI assistance was particularly useful for organizing the image-analysis and sound-generation functions and connecting them to the Streamlit interface.
+I tested a colourful rainbow illustration and found that the original analysis did not adequately represent its visual diversity. The system relied heavily on average colours, so regions containing different combinations of colours could produce almost identical notes.
 
-I kept the suggestion to separate image analysis and sound synthesis into different Python modules because it made the program easier to understand and modify.
+### Design Decision
 
-However, I did not want to prioritize melodic complexity simply for the sake of producing more notes. Based on my initial listening experience, I decided that preserving the atmosphere of the uploaded image was more important than maximizing musical variation.
+I revised the image analysis to calculate the distribution of eight hue families:
 
-I tested the generated code locally, observed the results, and made decisions based on the behaviour of the application and my own artistic intentions.
+- Red
+- Orange
+- Yellow
+- Green
+- Cyan
+- Blue
+- Purple
+- Pink
 
-## 5. Next Steps — Planned Iteration
+I also introduced overall and regional colour-diversity measurements.
 
-The next stage will focus on improving the musical experience and adding more meaningful user controls.
+Instead of representing each region through only one frequency, the sound engine could now combine multiple sound materials according to the proportions of different colours.
 
-Planned improvements include:
+Each colour family was assigned an artistic sound identity, such as Warm Resonance, Organic Waves, Air and Glass, or Crystal Dust. These mappings are expressive design choices, not claims that colours possess scientifically corresponding musical frequencies.
 
-- Developing richer ambient sound textures.
-- Introducing subtle melodic variation.
-- Adding user-adjustable sound parameters.
-- Improving the visual explanation of the image-to-sound mapping.
-- Testing the experience with another person and making a design decision based on their observations.
+### Testing and Result
 
-These improvements have not yet been completed.
+I tested the revised system with a colourful illustration featuring an elephant and a giraffe.
 
-## 6. User Testing — Pending
+The analysis represented more of the colours within each region, and the generated sound contained noticeably more variation.
 
-A user trial with at least one other person will be conducted after the next interactive prototype is ready.
+This was an improvement over the earlier repetitive output, although the connection between visual information and audio still needed to be communicated more clearly.
 
-The trial will examine whether users understand the controls, recognize the relationship between images and sound, and know how to modify or restart the experience.
+## 5. Iteration 4 — Making the Mapping Visible
 
-Observations, design decisions, and resulting changes will be documented here after the trial.
+Although the sound generation had improved, I noticed that the interface did not clearly explain how the image influenced the audio.
 
-## 7. Final Reflection — To Be Completed
+The user could hear a sound, but the underlying relationship between image regions, colours, and sound materials was difficult to understand.
 
-This section will be completed after the final implementation and user testing.
+### Design Decision
 
-## 8. Iteration 3 — Improving Colour Recognition and Sound Diversity
+I redesigned the Image-to-Sound Mapping section to display:
 
-During testing, I noticed that different images often produced very similar sounds. Although the initial sound engine worked technically, the results were frequently low-pitched and repetitive. This made the relationship between the uploaded image and the generated sound difficult to perceive.
+- The dominant sound material for each region.
+- A representative frequency.
+- The proportions of contributing sound materials.
+- Coloured bars illustrating the distribution.
 
-I also tested a colourful rainbow illustration and discovered that the system was not adequately representing its visual diversity. The early approach relied heavily on average colours and a single representative frequency for each image region. As a result, visually different areas could produce almost identical notes.
+This allowed the interface to communicate the logic behind the sound rather than presenting the result as an unexplained transformation.
 
-To address this, I revised the image analysis to calculate colour distributions across eight hue families rather than relying only on average colours. I also introduced colour diversity measurements and regional distributions to better represent images containing multiple colours.
+### Problem Encountered
 
-The sound generation system was then developed to use different sound materials, allowing colour combinations to contribute to a more layered and experimental soundscape.
+During implementation, an HTML rendering issue caused raw code to appear in the interface instead of the intended visual elements.
 
-After these changes, I tested another colourful illustration featuring an elephant and a giraffe. The resulting sound showed noticeably more variation, suggesting that the revised approach was more successful in translating visual differences into audible changes.
+I revised the display implementation and tested it again until the information appeared correctly as compact visual cards.
 
-## 9. Iteration 4 — Making the Image-to-Sound Relationship Visible
+### Result
 
-Although the sound generation had improved, I found that the interface still did not clearly communicate how the image influenced the audio.
+The interface became more informative and visually connected to the artwork.
 
-I therefore redesigned the Image-to-Sound Mapping section to display the dominant sound material, representative frequency, and proportions of contributing sound materials for each region.
+I learned that transparency can be part of the aesthetic experience: showing how a system interprets an image can encourage users to experiment rather than simply accept the generated result.
 
-During implementation, an HTML rendering issue caused raw code to appear in the interface instead of the intended visual components. I revised the display implementation and tested it again until the information appeared correctly as compact visual cards with coloured proportion bars.
+## 6. Iteration 5 — Exploring Scan Direction
 
-This iteration improved the transparency of the interaction by helping users understand why different parts of an image contribute different sound textures.
+After improving the colour analysis and visual mapping, I wanted to give users more control over how an image was interpreted.
 
-## 10. Reflection and Next Steps
+Previously, the program analysed eight vertical regions from left to right. However, an image can also be experienced as a sequence from top to bottom.
 
-These iterations showed me that technical functionality alone is not enough for an interactive artwork. The relationship between user input and system output must also be perceptible and understandable.
+I introduced two scanning directions:
 
-My next planned improvement is to introduce alternative image-scanning directions, allowing users to explore how reading an image from left to right or from top to bottom changes the resulting soundscape.
+**Left to Right** — Eight vertical regions.
 
-A user test with another person is still required. I will document their observations and any resulting design changes after the test has been completed.
+**Top to Bottom** — Eight horizontal regions.
+
+This changed the interaction from a single fixed interpretation into a small experiment in visual reading.
+
+### Testing and Observation
+
+I tested both directions using the same colourful illustration.
+
+When scanning from top to bottom, the early regions contained substantial cyan and blue, while later regions were more strongly influenced by orange and yellow.
+
+When scanning from left to right, orange was dominant across more regions, with different contributions from other colours.
+
+The overall brightness, saturation, and colour diversity remained the same because the uploaded image had not changed. However, the regional colour distributions changed significantly.
+
+### Design Reflection
+
+This test demonstrated that the order in which visual information is interpreted can change the resulting representation.
+
+I was interested in this not only as a technical feature but also as an artistic question: *Does an image have one fixed sound, or can different ways of reading it create different experiences?*
+
+## 7. Iteration 6 — Making the Soundscape Evolve
+
+Although the two scanning directions produced different colour distributions, I wanted the difference to become more perceptible through listening.
+
+The previous sound engine already used different timbres and colour-dependent envelopes, but much of the audio consisted of continuous oscillating tones. This could make the overall sound feel relatively stable, even when the underlying region data changed.
+
+### Design Decision
+
+I revised the sound-generation approach to introduce more distinct changes over time.
+
+Rather than relying primarily on continuous sound layers, the updated version uses evolving sound events associated with the sequence of image regions.
+
+The intention was to make the order of the visual scan more audible while preserving the dreamy and experimental character of the work.
+
+I retained the three sound modes — Echo, Flow, and Pulse — and the Texture Intensity control.
+
+### Testing and Result
+
+I replaced the sound-generation module and tested the application locally.
+
+The application successfully generated and played audio. During listening tests, I found that the sounds produced by different scanning directions were now noticeably different.
+
+This was an important improvement because the scanning control had become meaningful not only in the visual analysis but also in the resulting listening experience.
+
+The test was my own evaluation; it does not yet establish whether another user will perceive or understand the difference independently.
+
+## 8. AI Assistance and Design Decisions
+
+I used ChatGPT throughout development to help plan the application, explain technical concepts, draft and revise Python code, troubleshoot errors, and structure the project documentation.
+
+AI assistance was particularly useful when developing the image-analysis functions, procedural audio synthesis, Streamlit interface, and the connection between these components.
+
+I chose to keep image analysis and sound generation in separate modules because this made the program easier to understand, test, and modify.
+
+However, I did not automatically accept every proposed design direction.
+
+For example, when the early sounds were repetitive, I did not want to solve the problem simply by introducing more random notes. I preferred to develop richer textures that could preserve the visual atmosphere of an image.
+
+Similarly, when a colourful image produced insufficient sonic variation, I focused on improving how the image was analysed rather than adding arbitrary musical complexity.
+
+I tested the code locally, examined the interface, listened to the generated audio, and used those observations to guide subsequent changes.
+
+The final application uses procedural synthesis rather than an AI music-generation model. AI was a development assistant, not the system generating the final sound at runtime.
+
+## 9. User Testing — Pending
+
+A usability test with at least one person other than myself is still required.
+
+I plan to ask the participant to upload an image, generate sound, explore the sound modes and intensity control, and compare the two scanning directions.
+
+I will observe whether they can understand the controls without detailed instructions, recognize that changing scan direction affects the sound, and identify how to replay or download the result.
+
+I will record the participant's actual comments and any usability problems observed. If the test reveals a meaningful issue, I will document the resulting design decision and any change made.
+
+**Status: Not yet completed. No external participant feedback is reported in this document.**
+
+## 10. Current Reflection
+
+Developing Chromatic Echo has changed how I think about interactive artwork.
+
+Initially, I focused on whether a computer could translate an image into sound. As development progressed, I realized that a technically functioning transformation is not necessarily a meaningful experience.
+
+The first version could generate notes, but different images often sounded too similar. Improving colour recognition made the system more responsive to visual differences. Making the mapping visible helped communicate its internal logic. Introducing scan direction gave users a way to explore alternative interpretations, while evolving sound events made those interpretations more audible.
+
+The project also reinforced the importance of testing through actual experience. Several important design decisions emerged only after I uploaded photographs and illustrations, examined the output, and listened critically.
+
+For me, the most interesting outcome is not the idea that every image has a correct musical equivalent. Instead, Chromatic Echo treats translation between visual and auditory media as an artistic interpretation shaped by both the image and the user's choices.
+
+This reflection will be updated after external user testing and final submission checks.

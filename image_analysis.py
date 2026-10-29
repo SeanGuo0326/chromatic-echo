@@ -17,6 +17,11 @@ COLOR_NAMES = [
     "Pink",
 ]
 
+SCAN_DIRECTIONS = [
+    "Left to Right",
+    "Top to Bottom",
+]
+
 
 def get_color_distribution(hsv_array):
     """
@@ -65,12 +70,44 @@ def calculate_color_diversity(distribution):
     return float(entropy / np.log(8))
 
 
-def analyze_image(file_bytes: bytes):
+def split_image_regions(rgb, hsv, scan_direction):
+    """
+    Split an image into eight ordered regions.
+
+    Left to Right: eight vertical strips.
+    Top to Bottom: eight horizontal strips.
+    """
+    if scan_direction == "Left to Right":
+        axis = 1
+    elif scan_direction == "Top to Bottom":
+        axis = 0
+    else:
+        raise ValueError(
+            "Invalid scan direction. "
+            "Choose Left to Right or Top to Bottom."
+        )
+
+    rgb_regions = np.array_split(rgb, 8, axis=axis)
+    hsv_regions = np.array_split(hsv, 8, axis=axis)
+
+    return rgb_regions, hsv_regions
+
+
+def analyze_image(
+    file_bytes: bytes,
+    scan_direction: str = "Left to Right",
+):
     if not file_bytes:
         raise ValueError("The uploaded file is empty.")
 
     if len(file_bytes) > MAX_FILE_BYTES:
         raise ValueError("Image must be smaller than 25 MB.")
+
+    if scan_direction not in SCAN_DIRECTIONS:
+        raise ValueError(
+            "Invalid scan direction. "
+            "Choose Left to Right or Top to Bottom."
+        )
 
     try:
         with Image.open(BytesIO(file_bytes)) as source:
@@ -92,7 +129,17 @@ def analyze_image(file_bytes: bytes):
             "Try another JPG, PNG, or WEBP file."
         ) from exc
 
-    hsv = np.asarray(image.convert("HSV"), dtype=np.float32) / 255.0
+    # Ensure both dimensions can be divided into
+    # eight non-empty regions.
+    if image.width < 8 or image.height < 8:
+        image = image.resize(
+            (max(8, image.width), max(8, image.height))
+        )
+
+    hsv = np.asarray(
+        image.convert("HSV"), dtype=np.float32
+    ) / 255.0
+
     rgb = np.asarray(image, dtype=np.float32)
 
     brightness = float(np.mean(hsv[:, :, 2]))
@@ -105,26 +152,36 @@ def analyze_image(file_bytes: bytes):
     y = float(np.sum(np.sin(angles) * weights))
 
     if x * x + y * y > 1e-8:
-        hue = float((np.arctan2(y, x) / (2 * np.pi)) % 1.0)
+        hue = float(
+            (np.arctan2(y, x) / (2 * np.pi)) % 1.0
+        )
     else:
         hue = 0.0
 
-    # Divide the image into eight vertical regions.
-    rgb_regions = np.array_split(rgb, 8, axis=1)
-    hsv_regions = np.array_split(hsv, 8, axis=1)
+    # Split according to the selected scan direction.
+    rgb_regions, hsv_regions = split_image_regions(
+        rgb,
+        hsv,
+        scan_direction,
+    )
 
     region_colors = []
     region_distributions = []
     region_diversities = []
 
-    for rgb_region, hsv_region in zip(rgb_regions, hsv_regions):
+    for rgb_region, hsv_region in zip(
+        rgb_regions, hsv_regions
+    ):
         mean_rgb = rgb_region.mean(axis=(0, 1))
 
         region_colors.append(
             tuple(int(round(v)) for v in mean_rgb)
         )
 
-        distribution = get_color_distribution(hsv_region)
+        distribution = get_color_distribution(
+            hsv_region
+        )
+
         region_distributions.append(distribution)
 
         region_diversities.append(
@@ -152,4 +209,5 @@ def analyze_image(file_bytes: bytes):
         "region_distributions": region_distributions,
         "region_diversities": region_diversities,
         "color_names": COLOR_NAMES,
+        "scan_direction": scan_direction,
     }

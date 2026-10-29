@@ -1,8 +1,10 @@
 
 import hashlib
+from io import BytesIO
 import html
 
 import streamlit as st
+from PIL import Image
 
 from image_analysis import analyze_image
 from sound_generator import generate_sound, MOODS
@@ -329,6 +331,27 @@ if uploaded_file is not None:
     )
 
     # ==============================================
+    # SCAN DIRECTION
+    # ==============================================
+
+    st.subheader("Scan Direction")
+
+    scan_direction = st.radio(
+        "Choose how the image is read",
+        options=["Left to Right", "Top to Bottom"],
+        horizontal=True,
+    )
+
+    if scan_direction == "Top to Bottom":
+        # A 90-degree counterclockwise rotation maps the
+        # original top-to-bottom rows onto left-to-right columns.
+        # The uploaded image displayed above stays unchanged.
+        rotated = image.transpose(Image.Transpose.ROTATE_90)
+        rotated_buffer = BytesIO()
+        rotated.save(rotated_buffer, format="PNG")
+        _, features = analyze_image(rotated_buffer.getvalue())
+
+    # ==============================================
     # IMAGE ANALYSIS
     # ==============================================
 
@@ -413,14 +436,12 @@ if uploaded_file is not None:
     # COLOUR JOURNEY
     # ==============================================
 
-    st.subheader(
-        "Colour Journey — Left to Right"
-    )
+    st.subheader(f"Colour Journey — {scan_direction}")
 
     st.write(
-        "Each vertical image region contains "
-        "a distribution of colours, not just "
-        "one average colour."
+        "Each scan region contains a distribution of colours, "
+        "not just one average colour. The eight regions follow "
+        "your selected scan direction."
     )
 
     for index, region in enumerate(
@@ -475,6 +496,7 @@ if uploaded_file is not None:
 
     generation_id = (
         image_id,
+        scan_direction,
         mood,
         intensity_percent,
     )
@@ -570,7 +592,7 @@ if uploaded_file is not None:
         st.caption(
             "Explore how colours become layered "
             "sound materials. Each region represents "
-            "a moment in the image's left-to-right "
+            f"a moment in the image's {scan_direction.lower()} "
             "sonic journey."
         )
 
