@@ -1,15 +1,16 @@
 
 import hashlib
+import html
 
 import streamlit as st
 
 from image_analysis import analyze_image
-from sound_generator import generate_sound
+from sound_generator import generate_sound, MOODS
 
 
-# --------------------------------------------------
-# Page configuration
-# --------------------------------------------------
+# ==================================================
+# PAGE CONFIGURATION
+# ==================================================
 
 st.set_page_config(
     page_title="Chromatic Echo",
@@ -17,252 +18,591 @@ st.set_page_config(
     layout="centered",
 )
 
-st.title("Chromatic Echo")
 
-st.caption("Turn images into sound — Interactive Sound Artwork")
+# ==================================================
+# COLOUR PALETTE
+# ==================================================
 
-st.write(
-    "Upload an image and discover how its colors, "
-    "brightness, and visual patterns can become music."
-)
+COLOR_NAMES = [
+    "Red",
+    "Orange",
+    "Yellow",
+    "Green",
+    "Cyan",
+    "Blue",
+    "Purple",
+    "Pink",
+]
+
+COLOR_HEX = [
+    "#F16B79",
+    "#F4A35D",
+    "#F5D86E",
+    "#82D3A1",
+    "#64CFD0",
+    "#7298E8",
+    "#B492E7",
+    "#E98BC5",
+]
+
+MATERIAL_COLORS = {
+    "Warm Resonance": "#F16B79",
+    "Soft Bells": "#F4A35D",
+    "Golden Chimes": "#F5D86E",
+    "Organic Waves": "#82D3A1",
+    "Air and Glass": "#64CFD0",
+    "Deep Water": "#7298E8",
+    "Crystal Dust": "#B492E7",
+    "Dream Sparkles": "#E98BC5",
+}
 
 
-# --------------------------------------------------
-# Initialize session state
-# --------------------------------------------------
+# ==================================================
+# SESSION STATE
+# ==================================================
 
 if "audio_bytes" not in st.session_state:
-    st.session_state["audio_bytes"] = None
+    st.session_state.audio_bytes = None
 
 if "notes" not in st.session_state:
-    st.session_state["notes"] = None
+    st.session_state.notes = None
 
-if "image_id" not in st.session_state:
-    st.session_state["image_id"] = None
+if "generation_id" not in st.session_state:
+    st.session_state.generation_id = None
 
 
-# --------------------------------------------------
-# Image upload
-# --------------------------------------------------
+# ==================================================
+# HELPER FUNCTIONS
+# ==================================================
 
-uploaded_file = st.file_uploader(
-    "Choose an image",
-    type=["jpg", "jpeg", "png", "webp"],
-    accept_multiple_files=False,
-)
+def rgb_css(rgb):
+    r, g, b = rgb
+    return f"rgb({int(r)}, {int(g)}, {int(b)})"
 
-if uploaded_file is None:
 
-    st.info(
-        "Upload a JPG, PNG, or WEBP image to begin "
-        "(maximum 25 MB)."
+def colour_swatch(rgb, height=45):
+    """
+    Display a simple colour swatch.
+    """
+    st.markdown(
+        (
+            '<div style="'
+            f'background:{rgb_css(rgb)};'
+            f'height:{height}px;'
+            'border-radius:10px;'
+            '"></div>'
+        ),
+        unsafe_allow_html=True,
     )
 
-else:
 
-    try:
-        file_bytes = uploaded_file.getvalue()
+def colour_bar(distribution, height=14):
+    """
+    Create a horizontal stacked colour bar.
+    Uses a single-line HTML string to avoid
+    Markdown interpreting indentation as code.
+    """
+    segments = []
 
-        image, features = analyze_image(file_bytes)
-
-        current_image_id = hashlib.sha256(
-            file_bytes
-        ).hexdigest()
-
-    except ValueError as exc:
-
-        st.error(str(exc))
-
-        st.info(
-            "Please upload a different image to try again."
+    for index, value in enumerate(distribution):
+        percentage = max(
+            0.0,
+            float(value) * 100.0,
         )
 
-    else:
+        if percentage <= 0:
+            continue
 
-        # ------------------------------------------
-        # Display uploaded image
-        # ------------------------------------------
-
-        st.image(
-            image,
-            caption="Your uploaded image",
-            use_container_width=True,
+        segments.append(
+            '<div style="'
+            f'width:{percentage:.4f}%;'
+            f'background:{COLOR_HEX[index]};'
+            'height:100%;'
+            'flex-shrink:0;'
+            '"></div>'
         )
 
-        st.success("Image analyzed successfully!")
+    bar_html = (
+        '<div style="'
+        'display:flex;'
+        'width:100%;'
+        f'height:{height}px;'
+        'border-radius:7px;'
+        'overflow:hidden;'
+        'background:#414552;'
+        '">'
+        + "".join(segments)
+        + "</div>"
+    )
 
-        # ------------------------------------------
-        # Visual analysis
-        # ------------------------------------------
+    st.markdown(
+        bar_html,
+        unsafe_allow_html=True,
+    )
 
-        st.subheader("Visual Analysis")
 
-        col1, col2, col3 = st.columns(3)
+def material_bar(layers):
+    """
+    Display the colour proportions
+    associated with the sound materials.
+    """
+    segments = []
 
-        col1.metric(
-            "Brightness",
-            f"{features['brightness']:.0%}",
+    total = 0.0
+
+    for layer in layers:
+        percentage = max(
+            0.0,
+            float(layer["weight"]) * 100.0,
         )
 
-        col2.metric(
-            "Saturation",
-            f"{features['saturation']:.0%}",
+        if percentage <= 0:
+            continue
+
+        total += percentage
+
+        material = layer["material"]
+
+        colour = MATERIAL_COLORS.get(
+            material,
+            "#AAB2BD",
         )
 
-        col3.metric(
-            "Hue",
-            f"{features['hue'] * 360:.0f}°",
+        segments.append(
+            '<div style="'
+            f'width:{percentage:.4f}%;'
+            f'background:{colour};'
+            'height:100%;'
+            'flex-shrink:0;'
+            '"></div>'
         )
 
-        # ------------------------------------------
-        # Average color
-        # ------------------------------------------
+    remaining = max(
+        0.0,
+        100.0 - total,
+    )
 
-        st.subheader("Average Color")
-
-        r, g, b = features["average_rgb"]
-
-        st.markdown(
-            f'<div style="height:45px;'
-            f'border-radius:8px;'
-            f'background:rgb({r},{g},{b})">'
-            f'</div>',
-            unsafe_allow_html=True,
+    if remaining > 0:
+        segments.append(
+            '<div style="'
+            f'width:{remaining:.4f}%;'
+            'background:#414552;'
+            'height:100%;'
+            'flex-shrink:0;'
+            '"></div>'
         )
 
-        # ------------------------------------------
-        # Eight image regions
-        # ------------------------------------------
+    st.markdown(
+        (
+            '<div style="'
+            'display:flex;'
+            'width:100%;'
+            'height:14px;'
+            'border-radius:7px;'
+            'overflow:hidden;'
+            'background:#414552;'
+            '">'
+            + "".join(segments)
+            + "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
 
-        st.subheader("Eight Image Regions")
 
-        st.caption(
-            "The image is divided into eight vertical "
-            "regions. Each region will become a musical note."
+def show_material_card(index, note):
+    """
+    Compact Streamlit-based mapping card.
+    """
+    material = note.get(
+        "material",
+        "Ambient Texture",
+    )
+
+    layers = sorted(
+        note.get("layers", []),
+        key=lambda item: item["weight"],
+        reverse=True,
+    )
+
+    with st.container(border=True):
+
+        swatch_col, info_col = st.columns(
+            [1, 6],
+            vertical_alignment="center",
         )
 
-        columns = st.columns(8)
-
-        for i, (column, rgb) in enumerate(
-            zip(columns, features["region_colors"])
-        ):
-
-            r, g, b = rgb
-
-            with column:
-
-                st.markdown(
-                    f'<div style="height:42px;'
-                    f'border-radius:6px;'
-                    f'background:rgb({r},{g},{b})">'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-
-                st.caption(str(i + 1))
-
-        # ------------------------------------------
-        # Sound generation
-        # ------------------------------------------
-
-        st.divider()
-
-        st.subheader("Listen to Your Image")
-
-        st.write(
-            "Generate an original ambient melody based "
-            "on the colors and brightness of your image."
-        )
-
-        generate_clicked = st.button(
-            "🎵 Generate Sound",
-            type="primary",
-            use_container_width=True,
-        )
-
-        if generate_clicked:
-
-            try:
-
-                with st.spinner(
-                    "Turning colors into sound..."
-                ):
-
-                    audio_bytes, notes = generate_sound(
-                        features
-                    )
-
-                st.session_state["audio_bytes"] = (
-                    audio_bytes
-                )
-
-                st.session_state["notes"] = notes
-
-                st.session_state["image_id"] = (
-                    current_image_id
-                )
-
-            except Exception as exc:
-
-                st.error(
-                    "Sound generation failed. "
-                    "Please try again."
-                )
-
-                st.session_state["audio_bytes"] = None
-                st.session_state["notes"] = None
-                st.session_state["image_id"] = None
-
-                # Show technical details during development.
-                with st.expander("Technical details"):
-                    st.exception(exc)
-
-        # ------------------------------------------
-        # Audio player
-        # ------------------------------------------
-
-        if (
-            st.session_state["audio_bytes"] is not None
-            and st.session_state["image_id"]
-            == current_image_id
-        ):
-
-            st.success("Your sound is ready!")
-
-            st.audio(
-                st.session_state["audio_bytes"],
-                format="audio/wav",
+        with swatch_col:
+            colour_swatch(
+                note["color"],
+                height=46,
             )
 
-            st.download_button(
-                label="Download WAV",
-                data=st.session_state["audio_bytes"],
-                file_name="chromatic_echo.wav",
-                mime="audio/wav",
-                use_container_width=True,
+        with info_col:
+            st.markdown(
+                f"**{index + 1:02d} — "
+                f"{material}**"
             )
-
-            # --------------------------------------
-            # Musical note information
-            # --------------------------------------
-
-            st.subheader("Your Eight Musical Notes")
 
             st.caption(
-                "Each note corresponds to one image "
-                "region, from left to right."
+                f'{float(note["frequency"]):.1f} Hz'
+                f" · {len(layers)} sound materials"
             )
 
-            for i, note in enumerate(
-                st.session_state["notes"]
+        if layers:
+            material_bar(layers)
+
+            summary = " · ".join(
+                f'{layer["material"]} '
+                f'{float(layer["weight"]) * 100:.1f}%'
+                for layer in layers[:4]
+            )
+
+            st.caption(summary)
+
+        else:
+            st.caption(
+                "Minimal chromatic information"
+            )
+
+
+# ==================================================
+# HEADER
+# ==================================================
+
+st.title("Chromatic Echo")
+
+st.caption(
+    "An experimental image-to-sound experience"
+)
+
+st.write(
+    "Upload an image and explore how its "
+    "colours, brightness, and visual structure "
+    "can become an evolving soundscape."
+)
+
+
+# ==================================================
+# IMAGE UPLOAD
+# ==================================================
+
+uploaded_file = st.file_uploader(
+    "Upload an image",
+    type=[
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+    ],
+    help="Choose a JPG, PNG, or WEBP image.",
+)
+
+
+if uploaded_file is not None:
+
+    file_bytes = uploaded_file.getvalue()
+
+    try:
+        image, features = analyze_image(
+            file_bytes
+        )
+
+    except ValueError as error:
+        st.error(str(error))
+        st.stop()
+
+    except Exception:
+        st.error(
+            "The image could not be analysed. "
+            "Please try another image."
+        )
+        st.stop()
+
+    image_id = hashlib.sha256(
+        file_bytes
+    ).hexdigest()
+
+    st.image(
+        image,
+        caption="Your uploaded image",
+        width="stretch",
+    )
+
+    # ==============================================
+    # IMAGE ANALYSIS
+    # ==============================================
+
+    st.header("Image Analysis")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Brightness",
+            f'{features["brightness"] * 100:.0f}%',
+        )
+
+    with col2:
+        st.metric(
+            "Saturation",
+            f'{features["saturation"] * 100:.0f}%',
+        )
+
+    with col3:
+        st.metric(
+            "Hue",
+            f'{features["hue"] * 360:.0f}°',
+        )
+
+    # ==============================================
+    # COLOUR DISTRIBUTION
+    # ==============================================
+
+    st.subheader("Colour Distribution")
+
+    st.write(
+        "Instead of reducing the image to a "
+        "single average colour, Chromatic Echo "
+        "measures the proportion of different "
+        "hue families."
+    )
+
+    distribution = features[
+        "color_distribution"
+    ]
+
+    colour_bar(
+        distribution,
+        height=22,
+    )
+
+    colour_columns = st.columns(4)
+
+    names = features.get(
+        "color_names",
+        COLOR_NAMES,
+    )
+
+    for index, name in enumerate(names):
+
+        with colour_columns[index % 4]:
+
+            st.markdown(
+                (
+                    f'<span style="color:{COLOR_HEX[index]}">'
+                    "●</span> "
+                    f"{html.escape(str(name))}: "
+                    f"{float(distribution[index]) * 100:.1f}%"
+                ),
+                unsafe_allow_html=True,
+            )
+
+    st.metric(
+        "Colour Diversity",
+        f'{features["color_diversity"] * 100:.0f}%',
+    )
+
+    st.caption(
+        "Colour Diversity measures how evenly "
+        "the eight hue families are represented. "
+        "It does not measure the number of "
+        "individual RGB colours."
+    )
+
+    # ==============================================
+    # COLOUR JOURNEY
+    # ==============================================
+
+    st.subheader(
+        "Colour Journey — Left to Right"
+    )
+
+    st.write(
+        "Each vertical image region contains "
+        "a distribution of colours, not just "
+        "one average colour."
+    )
+
+    for index, region in enumerate(
+        features["region_distributions"]
+    ):
+
+        label_col, bar_col = st.columns(
+            [1, 5],
+            vertical_alignment="center",
+        )
+
+        with label_col:
+            st.caption(
+                f"Region {index + 1}"
+            )
+
+        with bar_col:
+            colour_bar(
+                region,
+                height=14,
+            )
+
+    # ==============================================
+    # SOUND CONTROLS
+    # ==============================================
+
+    st.divider()
+
+    st.header("Create Your Soundscape")
+
+    mood = st.selectbox(
+        "Sound Mode",
+        options=list(MOODS.keys()),
+        index=0,
+    )
+
+    st.caption(
+        MOODS[mood]
+    )
+
+    intensity_percent = st.slider(
+        "Texture Intensity",
+        min_value=0,
+        max_value=100,
+        value=50,
+        step=5,
+    )
+
+    intensity = (
+        intensity_percent / 100.0
+    )
+
+    generation_id = (
+        image_id,
+        mood,
+        intensity_percent,
+    )
+
+    generate_clicked = st.button(
+        "🎵 Generate Soundscape",
+        type="primary",
+        width="stretch",
+    )
+
+    # ==============================================
+    # GENERATE SOUND
+    # ==============================================
+
+    if generate_clicked:
+
+        try:
+            with st.spinner(
+                "Transforming colours into sound..."
             ):
 
-                st.write(
-                    f"Note {i + 1}: "
-                    f"{note['frequency']:.1f} Hz"
+                audio_bytes, notes = generate_sound(
+                    features,
+                    mood=mood,
+                    intensity=intensity,
                 )
 
-            st.info(
-                "Try uploading another image to hear "
-                "how different colors change the music."
+            st.session_state.audio_bytes = (
+                audio_bytes
             )
+
+            st.session_state.notes = notes
+
+            st.session_state.generation_id = (
+                generation_id
+            )
+
+        except Exception as error:
+
+            st.session_state.audio_bytes = None
+            st.session_state.notes = None
+            st.session_state.generation_id = None
+
+            st.error(
+                "Sound generation failed."
+            )
+
+            with st.expander(
+                "Technical details"
+            ):
+                st.code(str(error))
+
+    # ==============================================
+    # AUDIO PLAYBACK
+    # ==============================================
+
+    audio_is_current = (
+        st.session_state.audio_bytes
+        is not None
+        and st.session_state.notes
+        is not None
+        and st.session_state.generation_id
+        == generation_id
+    )
+
+    if audio_is_current:
+
+        st.success(
+            "Your soundscape is ready!"
+        )
+
+        st.audio(
+            st.session_state.audio_bytes,
+            format="audio/wav",
+        )
+
+        st.download_button(
+            "Download WAV",
+            data=st.session_state.audio_bytes,
+            file_name="chromatic_echo.wav",
+            mime="audio/wav",
+            width="stretch",
+        )
+
+        # ==========================================
+        # IMAGE-TO-SOUND MAPPING
+        # ==========================================
+
+        st.subheader(
+            "Image-to-Sound Mapping"
+        )
+
+        st.caption(
+            "Explore how colours become layered "
+            "sound materials. Each region represents "
+            "a moment in the image's left-to-right "
+            "sonic journey."
+        )
+
+        for index, note in enumerate(
+            st.session_state.notes
+        ):
+
+            show_material_card(
+                index,
+                note,
+            )
+
+    elif (
+        st.session_state.audio_bytes
+        is not None
+    ):
+
+        st.info(
+            "The image or sound settings have "
+            "changed. Click Generate Soundscape "
+            "to create a new result."
+        )
+
+
+# ==================================================
+# FOOTER
+# ==================================================
+
+st.divider()
+
+st.caption(
+    "Chromatic Echo · "
+    "Experimental Image Sonification · "
+    "SD5913"
+)
