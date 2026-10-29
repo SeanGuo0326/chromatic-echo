@@ -97,3 +97,33 @@ Observations, design decisions, and resulting changes will be documented here af
 ## 7. Final Reflection — To Be Completed
 
 This section will be completed after the final implementation and user testing.
+
+## 8. Iteration 3 — Improving Colour Recognition and Sound Diversity
+
+During testing, I noticed that different images often produced very similar sounds. Although the initial sound engine worked technically, the results were frequently low-pitched and repetitive. This made the relationship between the uploaded image and the generated sound difficult to perceive.
+
+I also tested a colourful rainbow illustration and discovered that the system was not adequately representing its visual diversity. The early approach relied heavily on average colours and a single representative frequency for each image region. As a result, visually different areas could produce almost identical notes.
+
+To address this, I revised the image analysis to calculate colour distributions across eight hue families rather than relying only on average colours. I also introduced colour diversity measurements and regional distributions to better represent images containing multiple colours.
+
+The sound generation system was then developed to use different sound materials, allowing colour combinations to contribute to a more layered and experimental soundscape.
+
+After these changes, I tested another colourful illustration featuring an elephant and a giraffe. The resulting sound showed noticeably more variation, suggesting that the revised approach was more successful in translating visual differences into audible changes.
+
+## 9. Iteration 4 — Making the Image-to-Sound Relationship Visible
+
+Although the sound generation had improved, I found that the interface still did not clearly communicate how the image influenced the audio.
+
+I therefore redesigned the Image-to-Sound Mapping section to display the dominant sound material, representative frequency, and proportions of contributing sound materials for each region.
+
+During implementation, an HTML rendering issue caused raw code to appear in the interface instead of the intended visual components. I revised the display implementation and tested it again until the information appeared correctly as compact visual cards with coloured proportion bars.
+
+This iteration improved the transparency of the interaction by helping users understand why different parts of an image contribute different sound textures.
+
+## 10. Reflection and Next Steps
+
+These iterations showed me that technical functionality alone is not enough for an interactive artwork. The relationship between user input and system output must also be perceptible and understandable.
+
+My next planned improvement is to introduce alternative image-scanning directions, allowing users to explore how reading an image from left to right or from top to bottom changes the resulting soundscape.
+
+A user test with another person is still required. I will document their observations and any resulting design changes after the test has been completed.
