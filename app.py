@@ -439,10 +439,42 @@ if uploaded_file is not None:
     st.subheader(f"Colour Journey — {scan_direction}")
 
     st.write(
-        "Each scan region contains a distribution of colours, "
-        "not just one average colour. The eight regions follow "
-        "your selected scan direction."
+        "Your image is divided into eight regions in the selected "
+        "scanning direction. Each horizontal bar represents one "
+        "region, and each colour shows its share of that region. "
+        "These colours shape the sound materials heard as the "
+        "soundscape evolves."
     )
+
+    # A visible legend makes the colour blocks understandable
+    # without requiring users to inspect the sound-mapping cards.
+    legend_items = []
+    for name, colour in zip(COLOR_NAMES, COLOR_HEX):
+        legend_items.append(
+            '<span style="display:inline-flex;align-items:center;'
+            'gap:5px;margin:0 14px 8px 0;white-space:nowrap;">'
+            f'<span style="display:inline-block;width:11px;height:11px;'
+            f'border-radius:3px;background:{colour};"></span>'
+            f'<span>{html.escape(name)}</span></span>'
+        )
+
+    st.markdown(
+        '<div style="display:flex;flex-wrap:wrap;'
+        'font-size:0.85rem;opacity:0.9;margin:6px 0 8px 0;">'
+        + ''.join(legend_items)
+        + '</div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("How do these colours become sounds?"):
+        st.write(
+            "Each colour family has its own synthesized sound "
+            "material (for example, blue becomes Deep Water and "
+            "orange becomes Soft Bells). A longer colour segment "
+            "means that colour is more common in that image region. "
+            "The eight regions are heard in scanning order, so "
+            "changing the scan direction changes the sound journey."
+        )
 
     for index, region in enumerate(
         features["region_distributions"]

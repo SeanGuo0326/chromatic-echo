@@ -194,18 +194,44 @@ I tested the code locally, examined the interface, listened to the generated aud
 
 The final application uses procedural synthesis rather than an AI music-generation model. AI was a development assistant, not the system generating the final sound at runtime.
 
-## 9. User Testing — Pending
+## 9. User Testing and Feedback
 
-A usability test with at least one person other than myself is still required.
+I conducted a usability test with a fellow student to evaluate whether Chromatic Echo communicated its intended relationship between images and sound.
 
-I plan to ask the participant to upload an image, generate sound, explore the sound modes and intensity control, and compare the two scanning directions.
+The participant was asked three questions about the experience.
 
-I will observe whether they can understand the controls without detailed instructions, recognize that changing scan direction affects the sound, and identify how to replay or download the result.
+**1. What relationship do you notice between the uploaded image and the generated sound?**
 
-I will record the participant's actual comments and any usability problems observed. If the test reveals a meaningful issue, I will document the resulting design decision and any change made.
+The participant felt that the image and sound were connected through their overall style and atmosphere.
 
-**Status: Not yet completed. No external participant feedback is reported in this document.**
+**2. Can you hear a difference between the two scanning directions?**
 
+The participant confirmed that the two scanning directions produced noticeably different sounds.
+
+**3. Which feature was confusing, and what would you improve?**
+
+The participant found the colour-block visualization confusing and suggested introducing a wider variety of instrumental sounds.
+
+### Reflection and Design Decisions
+
+The feedback suggested that the project was successful in communicating an atmospheric relationship between images and audio. It also supported my earlier observation that scanning direction could create meaningful differences in the listening experience.
+
+However, the participant's confusion about the colour blocks revealed a usability problem. Although the interface displayed detailed colour distributions, their purpose was not immediately clear.
+
+Based on this feedback, I decided to prioritize a clearer explanation of the colour-to-sound mapping, using accessible language to describe what each colour block represents.
+
+The suggestion to include more instrumental variety is also valuable. However, because the current system already uses eight procedural sound materials, I decided to retain the existing synthesis architecture for this version and consider additional instrumental textures as a future development.
+
+This test reminded me that an interactive experience must not only produce interesting results but also communicate how users can interpret and explore them.
+### Implemented Improvement
+
+Following the participant's feedback, I improved the Colour Journey interface to make the colour-block visualization easier to understand.
+
+I added a short explanation describing how the image is divided into eight scanning regions and how the colour proportions influence the evolving soundscape. I also introduced a colour legend identifying the eight hue families and an expandable section explaining how different colours correspond to synthesized sound materials.
+
+After implementing these changes, I reopened the application and checked the updated interface. The explanations, colour legend, and eight regional bars displayed correctly.
+
+This iteration demonstrated how user feedback can lead to a focused usability improvement without requiring a complete redesign of the application.
 ## 10. Current Reflection
 
 Developing Chromatic Echo has changed how I think about interactive artwork.
