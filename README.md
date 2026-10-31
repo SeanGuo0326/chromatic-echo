@@ -47,11 +47,9 @@ There is no single correct sound for an image. The experience encourages explora
 Clone the GitHub repository:
 
 ```bash
-git clone YOUR_REPOSITORY_URL
+git clone https://github.com/SeanGuo0326/chromatic-echo.git
 cd chromatic-echo
 ```
-
-Replace `YOUR_REPOSITORY_URL` with the actual public GitHub repository URL.
 
 Alternatively, download the repository as a ZIP file and extract it.
 
