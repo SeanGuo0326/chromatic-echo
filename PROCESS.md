@@ -243,5 +243,3 @@ The first version could generate notes, but different images often sounded too s
 The project also reinforced the importance of testing through actual experience. Several important design decisions emerged only after I uploaded photographs and illustrations, examined the output, and listened critically.
 
 For me, the most interesting outcome is not the idea that every image has a correct musical equivalent. Instead, Chromatic Echo treats translation between visual and auditory media as an artistic interpretation shaped by both the image and the user's choices.
-
-This reflection will be updated after external user testing and final submission checks.
