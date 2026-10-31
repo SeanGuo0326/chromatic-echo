@@ -1,7 +1,7 @@
 [project]
 name = "chromatic-echo"
 version = "0.1.0"
-description = "Add your description here"
+description = "An interactive image-to-sound experience using colour analysis and procedural audio synthesis."
 readme = "README.md"
 authors = [
     { name = "Guo ZiJun", email = "26082604g@connect.polyu.hk" }
